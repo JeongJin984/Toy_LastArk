@@ -1,0 +1,35 @@
+.hide::-webkit-scrollbar {
+    display: none;
+}
+
+body {
+    font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+}
+
+.table-container{
+    height: 400px;
+    width: 400px;
+    margin: 0 auto;
+}
+
+.md-table {
+    width: 80%;
+    border-collapse: collapse;
+    margin: 10px
+}
+
+.md-td {
+    border: 1px solid #ccc;
+    padding: 5px;
+    max-width: 30px;
+}
+
+.md-th {
+    border: 1px solid #ccc;
+    padding: 5px;
+    max-width: 30px;
+}
+
+.hugeModal {
+    width: 90%
+}
