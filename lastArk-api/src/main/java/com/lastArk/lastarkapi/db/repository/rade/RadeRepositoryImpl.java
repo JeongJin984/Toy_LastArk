@@ -62,7 +62,8 @@ public class RadeRepositoryImpl implements RadeRepositoryCustom{
                                         .map(v -> new RadeMemberDTO(v, null)).toList()
                         )
                 ),
-                new UserInfo(radePost.getUserId(), null, null, null),
+                objectMapper.writeValueAsString(List.of("COVAX", "TVAX", "RVAX")),
+                new UserInfo(radePost.getUserId(), null, null, null, null),
                 null);
 
         entityManager.persist(rade);

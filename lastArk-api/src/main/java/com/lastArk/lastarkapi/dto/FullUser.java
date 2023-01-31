@@ -11,6 +11,8 @@ import java.util.List;
 public class FullUser {
     private String userId;
     private String username;
+    private String profileImage;
+    private String repCharacterName;
 
     private List<UserLostArkProfile> userLostArkProfile = new ArrayList<>();
     private List<LostArkCharacter> userLostArkCharacters = new ArrayList<>();

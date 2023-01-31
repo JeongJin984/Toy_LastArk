@@ -20,7 +20,9 @@ public class UserInfo {
 
     @Column(unique = true)
     private String username;
+    private String repCharacter;
     private String profileImage;
+    private String password;
 
     @OneToMany(mappedBy = "writer", cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
     @JsonIgnore
