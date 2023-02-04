@@ -48,7 +48,7 @@ export const reducerUtils = {
   })
 };
 
-export const handleAsyncActions = (type, key, keepData = false) => {
+export const handleInitAsyncActions = (type, key, keepData = false) => {
   const [SUCCESS, ERROR] = [`${type}_SUCCESS`, `${type}_ERROR`];
   return (state, action) => {
     console.log(action)

@@ -9,18 +9,11 @@ import java.util.List;
 @Getter
 @Setter
 public class FullUser {
-    private String userId;
     private String username;
-    private String profileImage;
     private String repCharacterName;
 
     private List<UserLostArkProfile> userLostArkProfile = new ArrayList<>();
     private List<LostArkCharacter> userLostArkCharacters = new ArrayList<>();
-
-    public FullUser(String userId, String username) {
-        this.userId = userId;
-        this.username = username;
-    }
 
     public void setLostArkProfile(List<UserLostArkProfile> lostArkProfile) {
         this.userLostArkProfile = lostArkProfile;

@@ -14,7 +14,7 @@ public class UserInfoRepositoryImpl implements UserInfoRepositoryCustom{
 
     @Override
     @Transactional
-    public void insertUserInfo(String userId, String username, String repCharacter, String profileImage ) {
-        entityManager.persist(new UserInfo(userId, username, repCharacter, profileImage, null));
+    public void insertUserInfo(String username, String repCharacter) {
+        entityManager.persist(new UserInfo(username, repCharacter, null));
     }
 }

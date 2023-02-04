@@ -16,16 +16,10 @@ import java.util.List;
 @NoArgsConstructor
 public class UserInfo {
     @Id
-    private String userId;
-
-    @Column(unique = true)
     private String username;
-    private String repCharacter;
-    private String profileImage;
-    private String password;
+    private String repCharacterName;
 
-    @OneToMany(mappedBy = "writer", cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "writer", fetch = FetchType.LAZY)
     @JsonIgnore
-    private List<Posting> posts = new ArrayList<>();
-
+    List<UserRadeApply> list = new ArrayList<>();
 }

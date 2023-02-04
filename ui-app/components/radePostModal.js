@@ -5,7 +5,7 @@ import {useDispatch} from "react-redux";
 import {getRade, postRade} from "../reducer/radeReducer";
 import timestamp from "../lib/utils/timeFormat";
 
-export default function RadePostModal({postRadeModalShow, handlePostRadeModalClose, setPostRadeModalShow, curDate}) {
+export default function RadePostModal({postRadeModalShow, handlePostRadeModalClose, setPostRadeModalShow, curDate, userData}) {
   const dispatch = useDispatch()
 
   const [title, setTitle] = useState("")
@@ -32,7 +32,7 @@ export default function RadePostModal({postRadeModalShow, handlePostRadeModalClo
     const result = timestamp(target.toString())
 
     dispatch(postRade({
-      userId: "test111",
+      writer: userData.username,
       title, bossName, maxNum, content,
       startAt: result,
       members: members,

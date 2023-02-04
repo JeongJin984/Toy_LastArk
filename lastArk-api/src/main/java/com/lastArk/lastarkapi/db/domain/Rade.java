@@ -1,9 +1,13 @@
 package com.lastArk.lastarkapi.db.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.lastArk.lastarkapi.db.domain.etc.RadeInfo;
+import com.lastArk.lastarkapi.db.domain.etc.RadeMember;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.Cascade;
+import org.hibernate.annotations.Type;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
@@ -15,7 +19,7 @@ import java.util.List;
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
-public class Rade {
+public class Rade extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long radeId;
@@ -23,16 +27,15 @@ public class Rade {
     private String content;
     private LocalDateTime createdAt;
     private LocalDateTime startAt;
-    private String raidInfo;
-    private String apply;
+    @Type(type = "json")
+    @Column(columnDefinition = "json")
+    private RadeInfo raidInfo;
 
-    @ManyToOne(targetEntity = UserInfo.class)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "writer_id")
     private UserInfo writer;
 
-    @OneToMany(mappedBy = "rade", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "rade", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     @JsonIgnore
-    private List<RadeComment> comments = new ArrayList<>();
-
-
+    private List<UserRadeApply> applies = new ArrayList<>();
 }

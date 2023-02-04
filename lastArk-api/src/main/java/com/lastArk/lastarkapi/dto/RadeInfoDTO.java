@@ -14,5 +14,4 @@ public class RadeInfoDTO {
     private Integer maxMemberNum;
     private String bossName;
     private RadeMemberDTO radeMaster;
-    private List<RadeMemberDTO> radeMembers;
 }

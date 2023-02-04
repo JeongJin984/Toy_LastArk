@@ -8,10 +8,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class RadePostDTO {
-    private String userId;
+    private String writer;
     private String title;
     private String bossName;
-    private String maxNum;
+    private Integer maxNum;
     private String content;
     private String startAt;
     private String members;

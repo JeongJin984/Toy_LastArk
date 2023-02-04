@@ -1,75 +1,184 @@
-import NavigationBar from "../components/NavigationBar";
-import {Col, Pagination, Placeholder, Row, Table} from "react-bootstrap";
-import {Header, Icon, Card, Menu, Image, Divider, List} from "semantic-ui-react";
-import HoveredItem from "../components/HoveredItem";
 import {useEffect, useState} from "react";
-import HoverTableCell from "../components/HoverTableCell";
-import {getUser} from "../reducer/userReducer";
-import {useDispatch, useSelector} from "react-redux";
 import {useRouter} from "next/router";
+import Calendar from 'react-calendar';
+import 'react-calendar/dist/Calendar.css';
+import NavigationBar from "../components/NavigationBar";
+import {
+  Button,
+  Divider,
+  Header,
+  Icon,
+  Input, List,
+  Table,
+} from "semantic-ui-react";
+import {Col, Row} from "react-bootstrap";
+import {useDispatch, useSelector} from "react-redux";
+import {getRade} from "../reducer/radeReducer";
+import RadeInfoModal from "../components/radeInfoModal";
+import RadePostModal from "../components/radePostModal";
+import timestamp from "../lib/utils/timeFormat";
+import {getFixedRadeApply, getPendingRadeApply, getUser} from "../reducer/userReducer";
 
-export default function Home() {
-  const router = useRouter()
+export default function index() {
   const dispatch = useDispatch()
-  const { user } = useSelector(state => state.UserReducer)
+
+  const { rade } = useSelector(state => state.RadeReducer)
+  const { user, fixedApply, pendingApply } = useSelector(state => state.UserReducer)
+
+  const [radeInfoModalShow, setRadeInfoModalShow] = useState(false);
+  const [curRadeInfo, setCurRadeInfo] = useState(null)
+  const [postRadeModalShow, setPostRadeModalShow] = useState(false);
+  const [value, onChange] = useState(null);
 
   useEffect(() => {
-    dispatch(getUser({
-      username: "test1"
-    }))
-  }, [dispatch])
+    dispatch(getUser({}))
+    dispatch(getFixedRadeApply({state: "fixed"}))
+    dispatch(getPendingRadeApply({state: "pending"}))
+    onChange(new Date())
+  }, [])
 
-  const onClickHeader = (title) => () => {
-    router.push("/community/" + title)
+  const onClickRadeGet = () => {
+    dispatch(getRade({
+      startTime: timestamp(value.toString())
+    }))
   }
 
-  return(
-    <div>
-      {user.data ?
-        <div>
-          <NavigationBar/>
-          <Row style={{paddingTop: "60px"}}>
-            <Col lg={1} style={{padding: "10px"}}>
-            </Col>
-            <Col lg={10} style={{paddingTop: "5%", paddingBottom: "5%"}}>
-              <Header as='h2' icon textAlign='center' style={{cursor: "pointer"}} onClick={onClickHeader("모이면따뜻해요")}>
-                <Icon name='users' circular />
-                <Header.Content>대표 캐릭터: COVAX</Header.Content>
-                <Header.Subheader>
-                  모이면따뜻해요
-                </Header.Subheader>
-              </Header>
-              <div>
-                <Header as='h2' style={{marginTop: "5%"}}>
-                  <Icon name='plug' />
-                  <Header.Content>길드</Header.Content>
-                </Header>
-                <Card.Group>
+  const handleRadeInfoModalShow = (data) => () => {
+    setCurRadeInfo(data)
+    setRadeInfoModalShow(true)
+  }
+
+  const onClickRadePost = () => {
+    setPostRadeModalShow(true)
+  }
+
+  const handlePostRadeModalClose = () => {
+    setPostRadeModalShow(false)
+  }
+
+
+  return (
+    <div style={{height: "100vh"}}>
+      <NavigationBar userData={user.data}/>
+      <Row style={{paddingTop: "60px"}}>
+        <Col lg={2} style={{padding: "10px"}}>
+        </Col>
+        <Col lg={7} style={{paddingBottom: "2%"}}>
+          <Header as='h2' style={{marginTop: "1%"}}>
+            <Icon name='plug' />
+            <Header.Content>레이드</Header.Content>
+          </Header>
+          <Row style={{height: "35vh", overflowY: "auto"}}>
+            <div style={{float: "left", width: "350px"}}>
+              {value && <Calendar onChange={onChange} value={value} />}
+            </div>
+            <div style={{float: "right", width: "calc(100% - 350px)", textAlign: "center", marginTop: "10%"}}>
+              {value && <h3>{value.toString()}</h3>}
+              <Button style={{marginTop: "10%"}} onClick={onClickRadeGet}>레이드 조회</Button>
+              <Button style={{marginTop: "10%"}} onClick={onClickRadePost}>레이드 모집</Button>
+            </div>
+          </Row>
+          <div>
+            <Table basic='very' selectable={true}>
+              <Table.Header>
+                <Table.Row textAlign={"center"}>
+                  <Table.HeaderCell>번호</Table.HeaderCell>
+                  <Table.HeaderCell>제목</Table.HeaderCell>
+                  <Table.HeaderCell>공대장</Table.HeaderCell>
+                  <Table.HeaderCell>시작시간</Table.HeaderCell>
+                  <Table.HeaderCell>남은자리</Table.HeaderCell>
+                </Table.Row>
+              </Table.Header>
+              <Table.Body>
+                {
+                  rade.data ? rade.data.map((v, i) => (
+                    <Table.Row key={i} style={{cursor: "pointer"}} onClick={handleRadeInfoModalShow(v)}>
+                      <Table.Cell textAlign={"center"} width={1}>{v.radeId}</Table.Cell>
+                      <Table.Cell width={5}>{v.title}</Table.Cell>
+                      <Table.Cell textAlign={"center"} width={2}><a href={"https://loawa.com/char/" + v.radeInfo.radeMaster.characterName}>{v.radeInfo.radeMaster.characterName}</a></Table.Cell>
+                      <Table.Cell textAlign={"center"} width={3}>{v.startAt.substring(0,10) + " " + v.startAt.substring(11,16)}</Table.Cell>
+                      <Table.Cell textAlign={"center"} width={2}>{(v.radeInfo.maxMemberNum - v.apply.filter(v2 => v2.state === "fixed").length)   + "/" + v.radeInfo.maxMemberNum}</Table.Cell>
+                    </Table.Row>
+                  )) :
+                    rade.loading ?
+                      <Table.Row key={0}>
+                        <Table.Cell textAlign={"center"} width={1}>None</Table.Cell>
+                        <Table.Cell width={5}>로딩중</Table.Cell>
+                        <Table.Cell textAlign={"center"} width={2}>None</Table.Cell>
+                        <Table.Cell textAlign={"center"} width={3}>None</Table.Cell>
+                        <Table.Cell textAlign={"center"} width={2}>None</Table.Cell>
+                      </Table.Row> :
+                      <Table.Row key={0}>
+                        <Table.Cell textAlign={"center"} width={1}>None</Table.Cell>
+                        <Table.Cell width={5}>No Data</Table.Cell>
+                        <Table.Cell textAlign={"center"} width={2}>None</Table.Cell>
+                        <Table.Cell textAlign={"center"} width={3}>None</Table.Cell>
+                        <Table.Cell textAlign={"center"} width={2}>None</Table.Cell>
+                      </Table.Row>
+                }
+              </Table.Body>
+            </Table>
+          </div>
+        </Col>
+        <Col lg={3}>
+          <div style={{height: "93vh", width: "90%", float: "right", overflowY: "auto"}}>
+            <div style={{textAlign: "center", marginTop: "5px", marginBottom: "5px"}}>
+              <b>레이드 일정</b>
+            </div>
+            <Divider style={{margin: "10px"}} clearing />
+            <div style={{height: "44%", overflowY: "auto", scrollbarColor: "black"}}>
+              <Table basic='very' selectable={true} >
+                <Table.Header>
+                  <Table.Row textAlign={"center"}>
+                    <Table.HeaderCell>번호</Table.HeaderCell>
+                    <Table.HeaderCell>컨텐츠</Table.HeaderCell>
+                    <Table.HeaderCell>시작시간</Table.HeaderCell>
+                  </Table.Row>
+                </Table.Header>
+                <Table.Body>
                   {
-                    user.data.userLostArkProfile.map((v, i) => (
-                      v.guildName &&
-                      <Card key={i} href='/community/moddat' style={{textDecorationLine: "none"}}>
-                        <Header as='h3' style={{margin: "10px"}}>
-                          <Image size={"tiny"} circular src={v.characterImage} /> {v.guildName}
-                        </Header>
-                        <Card.Content description={<Image size={"medium"} src={v.characterImage} />} />
-                        <Card.Content extra>
-                          <Icon name='user' />{v.characterName + "(" + v.GuildMemberGrade + ")"}
-                        </Card.Content>
-                      </Card>
+                    fixedApply.data && fixedApply.data.map((v, i) => (
+                      <Table.Row key={i} style={{cursor: "pointer"}} onClick={handleRadeInfoModalShow(v)}>
+                        <Table.Cell textAlign={"center"} width={2}>{v.radeId}</Table.Cell>
+                        <Table.Cell textAlign={"center"} width={5}>{v.title}</Table.Cell>
+                        <Table.Cell textAlign={"center"} width={5}>{v.startAt.substring(0,10) + " " + v.startAt.substring(11,16)}</Table.Cell>
+                      </Table.Row>
                     ))
                   }
-                </Card.Group>
-              </div>
-              <Divider />
-            </Col>
-            <Col lg={1}/>
-          </Row>
-        </div> :
-        user.loading ?
-          <div>로딩중</div> :
-          <div>유저 로딩 실패</div>
-      }
+                </Table.Body>
+              </Table>
+            </div>
+            <div style={{textAlign: "center", paddingTop: "5px", paddingBottom: "-20px"}}>
+              <b>지원 현황</b>
+            </div>
+            <Divider style={{margin: "10px"}}/>
+            <div style={{height: "44%", overflowY: "auto", scrollbarColor: "black"}}>
+              <Table basic='very' selectable={true}>
+                <Table.Header>
+                  <Table.Row textAlign={"center"}>
+                    <Table.HeaderCell>번호</Table.HeaderCell>
+                    <Table.HeaderCell>컨텐츠</Table.HeaderCell>
+                    <Table.HeaderCell>시작시간</Table.HeaderCell>
+                  </Table.Row>
+                </Table.Header>
+                <Table.Body>
+                  {
+                    pendingApply.data && pendingApply.data.map((v, i) => (
+                      <Table.Row key={i} style={{cursor: "pointer"}} onClick={handleRadeInfoModalShow(v)}>
+                        <Table.Cell textAlign={"center"} width={2}>{v.radeId}</Table.Cell>
+                        <Table.Cell textAlign={"center"} width={5}>{v.radeInfo.bossName}</Table.Cell>
+                        <Table.Cell textAlign={"center"} width={5}>{v.startAt.substring(0,10) + " " + v.startAt.substring(11,16)}</Table.Cell>
+                      </Table.Row>
+                    ))
+                  }
+                </Table.Body>
+              </Table>
+            </div>
+          </div>
+        </Col>
+      </Row>
+      { (user.data && curRadeInfo) && <RadeInfoModal modalShow={radeInfoModalShow} setModalShow={setRadeInfoModalShow} rade={curRadeInfo} userData={user.data}/> }
+      { user.data && <RadePostModal handlePostRadeModalClose={handlePostRadeModalClose} postRadeModalShow={postRadeModalShow} setPostRadeModalShow={setPostRadeModalShow} curDate={value} userData={user.data}/>}
     </div>
-  )
+  );
 }

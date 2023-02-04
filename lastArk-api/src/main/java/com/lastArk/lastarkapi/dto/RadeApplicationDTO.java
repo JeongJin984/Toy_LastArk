@@ -4,12 +4,17 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
-public class RadeMemberDTO {
+@AllArgsConstructor
+public class RadeApplicationDTO {
+    private Long applyId;
     private String characterName;
     private Integer itemLevel;
+    private String username;
     private String state;
-    private Boolean isMaster;
+    private Long radeId;
+    private LocalDateTime createdAt;
 }

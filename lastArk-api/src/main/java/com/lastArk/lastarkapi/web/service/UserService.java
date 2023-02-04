@@ -3,13 +3,19 @@ package com.lastArk.lastarkapi.web.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lastArk.lastarkapi.db.domain.UserInfo;
+import com.lastArk.lastarkapi.db.domain.UserRadeApply;
+import com.lastArk.lastarkapi.db.domain.etc.RadeInfo;
+import com.lastArk.lastarkapi.db.repository.rade.RadeRepository;
+import com.lastArk.lastarkapi.db.repository.rade.RadeRepositoryCustom;
 import com.lastArk.lastarkapi.db.repository.userInfo.UserInfoRepository;
-import com.lastArk.lastarkapi.dto.FullUser;
-import com.lastArk.lastarkapi.dto.LostArkCharacter;
+import com.lastArk.lastarkapi.db.repository.userRadeApply.UserRadeApplyRepository;
+import com.lastArk.lastarkapi.db.repository.userRadeApply.UserRadeApplyRepositoryCustom;
+import com.lastArk.lastarkapi.dto.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.Arrays;
@@ -20,38 +26,39 @@ import java.util.List;
 @RequiredArgsConstructor
 public class UserService {
     private final UserInfoRepository userInfoRepository;
+    private final UserRadeApplyRepository radeApplyRepository;
     private final StringRedisTemplate redisTemplate;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     public FullUser updateUserLostArkInfo(String username) throws JsonProcessingException {
         UserInfo userInfo = userInfoRepository.findByUsername(username);
-        return updateFullUserCache(userInfo.getUserId(), userInfo.getUsername(), userInfo.getRepCharacter(), userInfo.getProfileImage());
-    }
-
-    public FullUser signUp(String userId, String username, String repCharacter, String profileImage) throws JsonProcessingException {
-        userInfoRepository.insertUserInfo(userId, username, repCharacter, profileImage);
-        return updateFullUserCache(userId, username, repCharacter, profileImage);
+        return updateFullUserCache(userInfo.getUsername(), userInfo.getRepCharacterName());
     }
 
     public FullUser getFullUserInfo(String username) throws JsonProcessingException {
-        FullUser fullUser = new FullUser();
-        UserInfo userInfo = userInfoRepository.findByUsername(username);
-
-        fullUser.setUserId(userInfo.getUserId());
-        fullUser.setUsername(userInfo.getUsername());
-        fullUser.setProfileImage(userInfo.getProfileImage());
-        fullUser.setRepCharacterName(userInfo.getRepCharacter());
-
-        String cashedFullUser = redisTemplate.opsForValue().get(userInfo.getUserId());
-
+        String cashedFullUser = redisTemplate.opsForValue().get(username);
         return objectMapper.readValue(cashedFullUser, FullUser.class);
     }
 
-    private FullUser updateFullUserCache(String userId, String username, String repCharacter, String profileImage) throws JsonProcessingException {
+    public FullUser getOrSaveFullUserInfo(String username, String repCharacter) throws JsonProcessingException {
+        String cashedFullUser = redisTemplate.opsForValue().get(username);
+
+        if(cashedFullUser == null) {
+            userInfoRepository.save(new UserInfo(username, repCharacter, null));
+            return updateFullUserCache(username, repCharacter);
+        } else {
+            return objectMapper.readValue(cashedFullUser, FullUser.class);
+        }
+    }
+
+    @Transactional
+    public List<RadeDTO> getUserRade(String username, String state) {
+        return radeApplyRepository.getAppliedRade(username, state);
+    }
+
+    private FullUser updateFullUserCache(String username, String repCharacter) throws JsonProcessingException {
         FullUser fullUser = new FullUser();
-        fullUser.setUserId(userId);
         fullUser.setUsername(username);
-        fullUser.setProfileImage(profileImage);
         fullUser.setRepCharacterName(repCharacter);
 
         HttpHeaders headers = new HttpHeaders();
@@ -62,7 +69,7 @@ public class UserService {
         RestTemplate restTemplate = new RestTemplate();
         Object[] userLostArkCharacters = restTemplate
                 .exchange(
-                        "https://developer-lostark.game.onstove.com/characters/COVAX/siblings",
+                        "https://developer-lostark.game.onstove.com/characters/" + repCharacter + "/siblings",
                         HttpMethod.GET,
                         entity,
                         Object[].class
@@ -87,12 +94,12 @@ public class UserService {
             assert result != null;
             LinkedHashMap<String, Object> resultMap = (LinkedHashMap<String, Object>) result;
             return new FullUser.UserLostArkProfile(
-                    resultMap.get("ServerName").toString(),
-                    resultMap.get("CharacterName").toString(),
-                    resultMap.get("CharacterImage").toString(),
+                    String.valueOf(resultMap.get("ServerName")),
+                    String.valueOf(resultMap.get("CharacterName")),
+                    String.valueOf(resultMap.get("CharacterImage")),
                     (String) resultMap.get("GuildName"),
                     (String) resultMap.get("GuildMemberGrade"),
-                    resultMap.get("CharacterClassName").toString()
+                    String.valueOf(resultMap.get("CharacterClassName"))
             );
         }).toList();
 
@@ -100,7 +107,7 @@ public class UserService {
         fullUser.setUserLostArkCharacters(userLostArkCharacterList);
         fullUser.setUserLostArkProfile(userLostArkProfile);
 
-        redisTemplate.opsForValue().set(userId, objectMapper.writeValueAsString(fullUser));
+        redisTemplate.opsForValue().set(username, objectMapper.writeValueAsString(fullUser));
 
         return fullUser;
     }
